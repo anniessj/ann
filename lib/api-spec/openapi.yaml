@@ -1,0 +1,291 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Annie Bot WhatsApp API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: bot
+    description: WhatsApp bot management
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /bot/status:
+    get:
+      operationId: getBotStatus
+      tags: [bot]
+      summary: Get bot connection status
+      responses:
+        "200":
+          description: Bot status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatus"
+
+  /bot/connect:
+    post:
+      operationId: connectBot
+      tags: [bot]
+      summary: Connect bot with phone number (pairing code)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectInput"
+      responses:
+        "200":
+          description: Pairing code generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectResult"
+        "400":
+          description: Bad request
+
+  /bot/disconnect:
+    post:
+      operationId: disconnectBot
+      tags: [bot]
+      summary: Disconnect bot
+      responses:
+        "200":
+          description: Disconnected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleResult"
+
+  /bot/groups:
+    get:
+      operationId: getBotGroups
+      tags: [bot]
+      summary: Get list of groups where bot is active
+      responses:
+        "200":
+          description: List of groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupInfo"
+
+  /bot/commands:
+    get:
+      operationId: getCommands
+      tags: [bot]
+      summary: Get all available commands
+      responses:
+        "200":
+          description: Command list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommandInfo"
+
+  /bot/logs:
+    get:
+      operationId: getBotLogs
+      tags: [bot]
+      summary: Get recent bot activity logs
+      responses:
+        "200":
+          description: Recent logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LogEntry"
+
+  /bot/stats:
+    get:
+      operationId: getBotStats
+      tags: [bot]
+      summary: Get bot statistics
+      responses:
+        "200":
+          description: Bot stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStats"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    BotStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        phoneNumber:
+          type: ["string", "null"]
+        name:
+          type: ["string", "null"]
+        state:
+          type: string
+          enum: [disconnected, connecting, connected, pairing]
+        pairingCode:
+          type: ["string", "null"]
+        groupCount:
+          type: integer
+        uptime:
+          type: ["integer", "null"]
+      required:
+        - connected
+        - phoneNumber
+        - name
+        - state
+        - pairingCode
+        - groupCount
+        - uptime
+
+    ConnectInput:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          description: Phone number with country code, no + (e.g. 573001234567)
+      required:
+        - phoneNumber
+
+    ConnectResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        pairingCode:
+          type: ["string", "null"]
+        message:
+          type: string
+      required:
+        - success
+        - pairingCode
+        - message
+
+    SimpleResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    GroupInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        active:
+          type: boolean
+        memberCount:
+          type: integer
+        antilink:
+          type: boolean
+      required:
+        - id
+        - name
+        - active
+        - memberCount
+        - antilink
+
+    CommandInfo:
+      type: object
+      properties:
+        command:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        permission:
+          type: string
+          enum: [all, admin, owner]
+      required:
+        - command
+        - description
+        - category
+        - permission
+
+    LogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+        group:
+          type: ["string", "null"]
+        user:
+          type: ["string", "null"]
+        command:
+          type: string
+        status:
+          type: string
+          enum: [success, error, blocked]
+      required:
+        - id
+        - timestamp
+        - group
+        - user
+        - command
+        - status
+
+    BotStats:
+      type: object
+      properties:
+        totalCommands:
+          type: integer
+        commandsToday:
+          type: integer
+        activeGroups:
+          type: integer
+        totalGroups:
+          type: integer
+        stickersCreated:
+          type: integer
+        membersKicked:
+          type: integer
+        linksBlocked:
+          type: integer
+      required:
+        - totalCommands
+        - commandsToday
+        - activeGroups
+        - totalGroups
+        - stickersCreated
+        - membersKicked
+        - linksBlocked
